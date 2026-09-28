@@ -96,15 +96,23 @@ if ($method === 'POST') {
                 e.Numidentific as Identificacion,
                 a.EstadoCivil,
                 a.Telefono,
-                a.Correo,                
-                a.RazonSocial,
-                a.Sexo,
+                a.Correo, 
+                f.Descripcion as ActividadBMX,
+                g.Descripcion as ActividadINEGI,
+                h.Descripcion  as SectorEcoINEGI,
+                i.Descripcion  as Ocupacion,
+                a.Puesto as Puesto,
+                a.RazonSocial,                
                 a.Estatus 
             FROM CLIENTES a
             INNER JOIN SUCURSALES b ON a.SucursalOrigen = b.SucursalID 
             INNER JOIN PROMOTORES c ON a.PromotorActual = c.PromotorID
             INNER JOIN PAISES d ON a.PaisNacionalidad = d.PaisID
             INNER JOIN IDENTIFICLIENTE e ON a.ClienteID = e.ClienteID
+            INNER JOIN  ACTIVIDADESBMX f on a.ActividadBancoMX =f.ActividadBMXID
+            INNER JOIN  ACTIVIDADESINEGI g on a.ActividadINEGI =g.ActividadINEGIID
+            INNER JOIN SECTORESECONOM h on a.SectorEconomico =h.SectorEcoID
+            INNER JOIN OCUPACIONES i on a.OcupacionID =i.OcupacionID 
             WHERE a.ClienteID = :clienteId";
 
     try {
