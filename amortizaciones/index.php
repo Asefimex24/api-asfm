@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Incluir la configuración de la base de datos
-require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/../config/database.php';
 
 // Capturar y decodificar el cuerpo (body) en formato JSON
 $inputData = json_decode(file_get_contents("php://input"), true);
