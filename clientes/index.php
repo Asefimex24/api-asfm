@@ -84,6 +84,7 @@ if ($method === 'GET') {
 // OPCIÓN 2: Método POST (Buscar UN cliente por ClienteID en el JSON Body)
 // -------------------------------------------------------------------
 if ($method === 'POST') {
+    
     $inputData = json_decode(file_get_contents("php://input"), true);
 
     if (!$inputData || !isset($inputData['ClienteID']) || empty(trim($inputData['ClienteID']))) {
