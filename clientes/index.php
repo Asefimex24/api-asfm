@@ -2,7 +2,7 @@
 // Encabezados HTTP
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Methods: GET, POST");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
 // Manejo del preflight CORS
@@ -11,84 +11,128 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// Validar método POST
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode([
-        "status" => "error",
-        "mensaje" => "Método no permitido. Utiliza POST."
-    ]);
-    exit();
-}
-
-// Incluir configuración de base de datos desde la carpeta raíz
+// Incluir configuración de la base de datos
 require_once __DIR__ . '/../config/database.php';
 
-// Capturar el JSON del cuerpo de la petición
-$inputData = json_decode(file_get_contents("php://input"), true);
-
-// Validar parámetro ClienteID
-if (!$inputData || !isset($inputData['ClienteID']) || empty(trim($inputData['ClienteID']))) {
-    http_response_code(400);
-    echo json_encode([
-        "status" => "error",
-        "mensaje" => "Se requiere el parámetro 'ClienteID' dentro del JSON body."
-    ]);
-    exit();
-}
-
-$clienteId = trim($inputData['ClienteID']);
-
-// Instanciar conexión y ejecutar consulta
 $database = new Database();
 $db = $database->getConnection();
+$method = $_SERVER['REQUEST_METHOD'];
 
-$sql = "SELECT 
-            a.ClienteID, 
-            a.TipoPersona,
-            b.NombreSucurs AS Sucursal, 
-            a.NombreCompleto, 
-            a.Curp, 
-            a.Rfc,
-            a.FechaNAcimiento,
-            a.RazonSocial,
-            a.Correo,
-            a.Sexo,
-            a.EstadoCivil,
-            a.FechaAlta,
-            a.Estatus 
-        FROM CLIENTES a 
-        INNER JOIN SUCURSALES b ON a.SucursalOrigen = b.SucursalID 
-        WHERE a.ClienteID = :clienteId";
+// -------------------------------------------------------------------
+// OPCIÓN 1: Método GET (Obtener TODOS los clientes)
+// -------------------------------------------------------------------
+if ($method === 'GET') {
+    $sql = "SELECT 
+                a.ClienteID, 
+                a.TipoPersona,
+                b.NombreSucurs AS Sucursal, 
+                a.NombreCompleto, 
+                a.Curp, 
+                a.Rfc,
+                a.FechaNAcimiento,
+                a.RazonSocial,
+                a.Correo,
+                a.Sexo,
+                a.EstadoCivil,
+                a.FechaAlta,
+                a.Estatus 
+            FROM CLIENTES a 
+            INNER JOIN SUCURSALES b ON a.SucursalOrigen = b.SucursalID
+            ORDER BY a.ClienteID ASC";
 
-try {
-    $stmt = $db->prepare($sql);
-    $stmt->bindParam(':clienteId', $clienteId, PDO::PARAM_STR);
-    $stmt->execute();
+    try {
+        $stmt = $db->prepare($sql);
+        $stmt->execute();
+        $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Como buscamos un cliente específico por ID, usamos fetch() en lugar de fetchAll()
-    $cliente = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if ($cliente) {
         http_response_code(200);
         echo json_encode([
             "status" => "success",
-            "data"   => $cliente
+            "total"  => count($clientes),
+            "data"   => $clientes
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-    } else {
-        http_response_code(404);
+
+    } catch (PDOException $e) {
+        http_response_code(500);
         echo json_encode([
             "status"  => "error",
-            "mensaje" => "No se encontró ningún cliente con el ClienteID proporcionado.",
-            "data"    => null
+            "mensaje" => "Error en la consulta: " . $e->getMessage()
         ]);
     }
-
-} catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode([
-        "status"  => "error",
-        "mensaje" => "Error en la consulta: " . $e->getMessage()
-    ]);
+    exit();
 }
+
+// -------------------------------------------------------------------
+// OPCIÓN 2: Método POST (Buscar UN cliente por ClienteID en el JSON Body)
+// -------------------------------------------------------------------
+if ($method === 'POST') {
+    $inputData = json_decode(file_get_contents("php://input"), true);
+
+    if (!$inputData || !isset($inputData['ClienteID']) || empty(trim($inputData['ClienteID']))) {
+        http_response_code(400);
+        echo json_encode([
+            "status" => "error",
+            "mensaje" => "Se requiere el parámetro 'ClienteID' dentro del JSON body."
+        ]);
+        exit();
+    }
+
+    $clienteId = trim($inputData['ClienteID']);
+
+    $sql = "SELECT 
+                a.ClienteID, 
+                a.TipoPersona,
+                b.NombreSucurs AS Sucursal, 
+                a.NombreCompleto, 
+                a.Curp, 
+                a.Rfc,
+                a.FechaNAcimiento,
+                a.RazonSocial,
+                a.Correo,
+                a.Sexo,
+                a.EstadoCivil,
+                a.FechaAlta,
+                a.Estatus 
+            FROM CLIENTES a 
+            INNER JOIN SUCURSALES b ON a.SucursalOrigen = b.SucursalID 
+            WHERE a.ClienteID = :clienteId";
+
+    try {
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam(':clienteId', $clienteId, PDO::PARAM_STR);
+        $stmt->execute();
+
+        $cliente = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($cliente) {
+            http_response_code(200);
+            echo json_encode([
+                "status" => "success",
+                "data"   => $cliente
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        } else {
+            http_response_code(404);
+            echo json_encode([
+                "status"  => "error",
+                "mensaje" => "No se encontró ningún cliente con el ClienteID proporcionado.",
+                "data"    => null
+            ]);
+        }
+
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode([
+            "status"  => "error",
+            "mensaje" => "Error en la consulta: " . $e->getMessage()
+        ]);
+    }
+    exit();
+}
+
+// Método no permitido
+http_response_code(405);
+echo json_encode([
+    "status"  => "error",
+    "mensaje" => "Método no permitido. Utiliza GET o POST."
+]);
 ?>
