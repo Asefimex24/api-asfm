@@ -80,21 +80,31 @@ if ($method === 'POST') {
     $clienteId = trim($inputData['ClienteID']);
 
     $sql = "SELECT 
+                a.NombreCompleto,
                 a.ClienteID, 
                 a.TipoPersona,
-                b.NombreSucurs AS Sucursal, 
-                a.NombreCompleto, 
+                c.NombrePromotor,
+                b.NombreSucurs AS Sucursal,
+                a.FechaAlta,
+                a.NivelRiesgo,
                 a.Curp, 
                 a.Rfc,
-                a.FechaNAcimiento,
-                a.RazonSocial,
-                a.Correo,
                 a.Sexo,
+                a.FechaNAcimiento,
+                a.Nacion as NAcionalidad,
+                d.Nombre as Pais,
+                e.Numidentific as Identificacion,
                 a.EstadoCivil,
-                a.FechaAlta,
+                a.Telefono,
+                a.Correo,                
+                a.RazonSocial,
+                a.Sexo,
                 a.Estatus 
-            FROM CLIENTES a 
+            FROM CLIENTES a
             INNER JOIN SUCURSALES b ON a.SucursalOrigen = b.SucursalID 
+            INNER JOIN PROMOTORES c ON a.PromotorActual = c.PromotorID
+            INNER JOIN PAISES d ON a.PaisNacionalidad = d.PaisID
+            INNER JOIN IDENTIFICLIENTE e ON a.ClienteID = e.ClienteID
             WHERE a.ClienteID = :clienteId";
 
     try {
