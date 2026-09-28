@@ -23,21 +23,39 @@ $method = $_SERVER['REQUEST_METHOD'];
 // -------------------------------------------------------------------
 if ($method === 'GET') {
     $sql = "SELECT 
+                a.NombreCompleto,
                 a.ClienteID, 
                 a.TipoPersona,
-                b.NombreSucurs AS Sucursal, 
-                a.NombreCompleto, 
+                c.NombrePromotor,
+                b.NombreSucurs AS Sucursal,
+                a.FechaAlta,
+                a.NivelRiesgo,
                 a.Curp, 
                 a.Rfc,
-                a.FechaNAcimiento,
-                a.RazonSocial,
-                a.Correo,
                 a.Sexo,
+                a.FechaNAcimiento,
+                a.Nacion as Nacionalidad,
+                d.Nombre as Pais,
+                e.Numidentific as Identificacion,
                 a.EstadoCivil,
-                a.FechaAlta,
+                a.Telefono,
+                a.Correo, 
+                f.Descripcion as ActividadBMX,
+                g.Descripcion as ActividadINEGI,
+                h.Descripcion  as SectorEcoINEGI,
+                i.Descripcion  as Ocupacion,
+                a.Puesto as Puesto,
+                a.RazonSocial,                
                 a.Estatus 
-            FROM CLIENTES a 
-            INNER JOIN SUCURSALES b ON a.SucursalOrigen = b.SucursalID
+            FROM CLIENTES a
+            INNER JOIN SUCURSALES b ON a.SucursalOrigen = b.SucursalID 
+            INNER JOIN PROMOTORES c ON a.PromotorActual = c.PromotorID
+            INNER JOIN PAISES d ON a.PaisNacionalidad = d.PaisID
+            INNER JOIN IDENTIFICLIENTE e ON a.ClienteID = e.ClienteID
+            INNER JOIN  ACTIVIDADESBMX f on a.ActividadBancoMX =f.ActividadBMXID
+            INNER JOIN  ACTIVIDADESINEGI g on a.ActividadINEGI =g.ActividadINEGIID
+            INNER JOIN SECTORESECONOM h on a.SectorEconomico =h.SectorEcoID
+            INNER JOIN OCUPACIONES i on a.OcupacionID =i.OcupacionID
             ORDER BY a.ClienteID ASC";
 
     try {
@@ -91,7 +109,7 @@ if ($method === 'POST') {
                 a.Rfc,
                 a.Sexo,
                 a.FechaNAcimiento,
-                a.Nacion as NAcionalidad,
+                a.Nacion as Nacionalidad,
                 d.Nombre as Pais,
                 e.Numidentific as Identificacion,
                 a.EstadoCivil,
