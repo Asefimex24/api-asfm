@@ -16,19 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// 1. Incluir configuración de la base de datos (Subiendo 3 niveles)
-$configPath = dirname(__DIR__, 3) . '/config/database.php';
-
-if (!file_exists($configPath)) {
-    http_response_code(500);
-    echo json_encode([
-        "status" => "error",
-        "mensaje" => "No se encontró el archivo de conexión en: " . $configPath
-    ]);
-    exit();
-}
-
-require_once $configPath;
+// Incluir configuración de la base de datos
+require_once __DIR__ . '/../config/database.php';
 
 $database = new Database();
 $db = $database->getConnection();
@@ -61,21 +50,44 @@ if ($method === 'POST') {
     try {
         // Consulta SQL con el JOIN corregido
         $sql = "SELECT
-                    a.ClienteID,
-                    b.NombreCompleto,
-                    a.DireccionID,
-                    a.TipoDireccionID,
-                    a.PaisID AS ClavePais,
-                    c.Nombre AS Pais,
-                    a.EstadoId AS ClaveEntidad,
-                    d.Nombre AS EntidadFederativa,
-                    a.MunicipioID AS ClaveMunicipio,
-                    e.Nombre AS Municipio           
-                FROM DIRECCLIENTE a
-                INNER JOIN CLIENTES b ON a.ClienteID = b.ClienteID
-                INNER JOIN PAISES c ON a.PaisID = c.PaisID
-                INNER JOIN ESTADOSREPUB d ON a.EstadoID = d.EstadoID
-                LEFT JOIN MUNICIPIOSREPUB e ON e.MunicipioID = a.MunicipioID AND e.EstadoID = a.EstadoID
+	a.ClienteID,
+	b.NombreCompleto,
+	a.DireccionID,
+	a.TipoDireccionID,
+	a.PaisID as ClavePais,
+	c.Nombre as Pais,
+	a.EstadoId as ClaveEntidad,
+	d.Nombre as EntidadFederativa,
+	a.MunicipioID as ClaveMunicipio,
+	e.Nombre as Municipio,
+	a.LocalidadID as ClaveLocalidad,
+	f.NombreLocalidad as Localidad,
+	f.NombreLocalidad as Ciudad,
+	a.ColoniaID  as ClaveColonia,
+	g.Asentamiento as Colonia,
+	a.Calle,
+	a.NumeroCasa,
+	a.NumInterior,
+	a.Piso,
+	a.PrimeraEntreCalle,
+	a.SegundaEntreCalle,
+	g.CodigoPostal,
+	a.Latitud,
+	a.Longitud,
+	a.AniosRes,
+	a.Descripcion,
+	a.Oficial,
+	a.Fiscal,
+	a.Lote,
+	a.Manzana,
+	a.DireccionCompleta 
+FROM DIRECCLIENTE a
+INNER JOIN CLIENTES b ON a.ClienteID =b.ClienteID
+INNER JOIN PAISES c ON a.PaisID = c.PaisID
+INNER JOIN ESTADOSREPUB d ON a.EstadoID =d.EstadoID
+INNER JOIN MUNICIPIOSREPUB e ON e.MunicipioID =a.MunicipioID AND a.EstadoID =e.EstadoID
+INNER JOIN LOCALIDADREPUB f ON  a.LocalidadID =f.LocalidadID  AND a.EstadoID =f.EstadoID  and a.MunicipioID =f.MunicipioID
+INNER JOIN COLONIASREPUB g ON a.ColoniaID =g.ColoniaID  AND a.EstadoID =g.EstadoID AND a.MunicipioID =g.MunicipioID 
                 WHERE a.ClienteID = :clienteID 
                   AND a.DireccionID = :direccionID";
 
